@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::tab::settings::{self, SettingType, Task, horiz_cell, mount_requires_restart};
+use crate::tab::settings::{self, horiz_cell, mount_requires_restart, SettingType, Task};
 use wgui::{
 	components::{
 		button::{ButtonClickEvent, ComponentButton},
@@ -118,6 +118,62 @@ pub fn options_slider_f32(
 		let tasks = mp.tasks.clone();
 		move |_common, e| {
 			tasks.push(Task::UpdateFloat(setting, e.value));
+		}
+	}));
+
+	Ok(())
+}
+
+pub fn options_range_f32(
+	mp: &mut MacroParams,
+	parent: WidgetID,
+	setting: SettingType,
+	setting2: SettingType,
+	min: f32,
+	max: f32,
+	step: f32,
+) -> anyhow::Result<()> {
+	let id = mp.idx.to_string();
+	mp.idx += 1;
+
+	let mut params: HashMap<Rc<str>, Rc<str>> = HashMap::new();
+	params.insert(Rc::from("id"), Rc::from(id.as_ref()));
+
+	match setting.get_translation() {
+		Ok(translation) => params.insert(Rc::from("translation"), translation.into()),
+		Err(raw_text) => params.insert(Rc::from("text"), raw_text.into()),
+	};
+
+	if let Some(tooltip) = setting.get_tooltip() {
+		params.insert(Rc::from("tooltip"), Rc::from(tooltip));
+	}
+
+	let value = setting.mut_f32(mp.config).to_string();
+	let value2 = setting2.mut_f32(mp.config).to_string();
+	params.insert(Rc::from("value"), Rc::from(value));
+	params.insert(Rc::from("value2"), Rc::from(value2));
+	params.insert(Rc::from("min"), Rc::from(min.to_string()));
+	params.insert(Rc::from("max"), Rc::from(max.to_string()));
+	params.insert(Rc::from("step"), Rc::from(step.to_string()));
+
+	let id_cell = horiz_cell(mp.layout, parent)?;
+
+	mp.parser_state
+		.instantiate_template(mp.doc_params, "RangeSetting", mp.layout, id_cell, params)?;
+
+	if setting.requires_restart() {
+		mount_requires_restart(mp.layout, id_cell)?;
+	}
+
+	let slider = mp.parser_state.fetch_component_as::<ComponentSlider>(&id)?;
+	slider.on_value_changed(Box::new({
+		let tasks = mp.tasks.clone();
+		move |_common, e| {
+			if matches!(e.index, wgui::components::slider::ValueIndex::Primary) {
+				tasks.push(Task::UpdateFloat(setting, e.value));
+			} else {
+				tasks.push(Task::UpdateFloat(setting2, e.value));
+			}
 		}
 	}));
 

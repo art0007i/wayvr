@@ -1,6 +1,8 @@
 use crate::tab::settings::{
+	macros::{
+		options_category, options_checkbox, options_dropdown, options_range_f32, options_slider_f32, options_slider_i32,
+	},
 	SettingType, SettingsMountParams, SettingsTab,
-	macros::{options_category, options_checkbox, options_dropdown, options_slider_f32, options_slider_i32},
 };
 
 pub struct State {}
@@ -25,8 +27,16 @@ impl State {
 		options_slider_f32(par.mp, c, SettingType::ScrollSpeed, 0.1, 5.0, 0.1)?;
 		options_slider_f32(par.mp, c, SettingType::LongPressDuration, 0.1, 2.0, 0.1)?;
 		options_slider_f32(par.mp, c, SettingType::PointerLerpFactor, 0.1, 1.0, 0.1)?;
-		options_slider_f32(par.mp, c, SettingType::XrClickSensitivity, 0.1, 1.0, 0.1)?;
-		options_slider_f32(par.mp, c, SettingType::XrClickSensitivityRelease, 0.1, 1.0, 0.1)?;
+		options_range_f32(
+			par.mp,
+			c,
+			SettingType::XrClickSensitivityRelease,
+			SettingType::XrClickSensitivity,
+			0.1,
+			0.9,
+			0.1,
+		)?;
+
 		options_slider_i32(par.mp, c, SettingType::ClickFreezeTimeMs, 0, 500, 50)?;
 		Ok(State {})
 	}

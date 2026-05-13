@@ -444,10 +444,10 @@ impl SettingType {
 			Self::UprightScreenFix => Ok("APP_SETTINGS.UPRIGHT_SCREEN_FIX"),
 			Self::UsePassthrough => Ok("APP_SETTINGS.USE_PASSTHROUGH"),
 			Self::UseSkybox => Ok("APP_SETTINGS.USE_SKYBOX"),
-			Self::WatchViewAngleMax => Ok("APP_SETTINGS.WATCH_VIEW_ANGLE_MAX"),
-			Self::WatchViewAngleMin => Ok("APP_SETTINGS.WATCH_VIEW_ANGLE_MIN"),
+			Self::WatchViewAngleMax => Ok("APP_SETTINGS.WATCH_VIEW_ANGLE"),
+			Self::WatchViewAngleMin => Ok("APP_SETTINGS.WATCH_VIEW_ANGLE"),
 			Self::XrClickSensitivity => Ok("APP_SETTINGS.XR_CLICK_SENSITIVITY"),
-			Self::XrClickSensitivityRelease => Ok("APP_SETTINGS.XR_CLICK_SENSITIVITY_RELEASE"),
+			Self::XrClickSensitivityRelease => Ok("APP_SETTINGS.XR_CLICK_SENSITIVITY"),
 			Self::XwaylandByDefault => Ok("APP_SETTINGS.XWAYLAND_BY_DEFAULT"),
 		}
 	}
@@ -469,9 +469,9 @@ impl SettingType {
 			Self::UsePassthrough => Some("APP_SETTINGS.USE_PASSTHROUGH_HELP"),
 			Self::UseSkybox => Some("APP_SETTINGS.USE_SKYBOX_HELP"),
 			Self::XrClickSensitivity => Some("APP_SETTINGS.XR_CLICK_SENSITIVITY_HELP"),
-			Self::XrClickSensitivityRelease => Some("APP_SETTINGS.XR_CLICK_SENSITIVITY_RELEASE_HELP"),
-			Self::WatchViewAngleMin => Some("APP_SETTINGS.WATCH_VIEW_ANGLE_MIN_HELP"),
-			Self::WatchViewAngleMax => Some("APP_SETTINGS.WATCH_VIEW_ANGLE_MAX_HELP"),
+			Self::XrClickSensitivityRelease => Some("APP_SETTINGS.XR_CLICK_SENSITIVITY_HELP"),
+			Self::WatchViewAngleMin => Some("APP_SETTINGS.WATCH_VIEW_ANGLE_HELP"),
+			Self::WatchViewAngleMax => Some("APP_SETTINGS.WATCH_VIEW_ANGLE_HELP"),
 			_ => None,
 		}
 	}

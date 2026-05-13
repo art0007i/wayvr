@@ -17,6 +17,11 @@
     <Slider id="${id}" width="250" height="24" min_value="${min}" max_value="${max}" step="${step}" value="${value}" tooltip="${tooltip}" />
   </template>
 
+  <template name="RangeSetting">
+    <label text="${text}" translation="${translation}" />
+    <Slider id="${id}" width="250" height="24" min_value="${min}" max_value="${max}" step="${step}" value="${value}" value2="${value2}" tooltip="${tooltip}" />
+  </template>
+
   <template name="SelectSetting">
     <label text="${text}" translation="${translation}" tooltip="${tooltip}" />
     <RadioGroup id="${id}" />

@@ -1,6 +1,6 @@
 use crate::tab::settings::{
+	macros::{options_category, options_checkbox, options_range_f32, options_slider_f32},
 	SettingType, SettingsMountParams, SettingsTab,
-	macros::{options_category, options_checkbox, options_slider_f32},
 };
 
 pub struct State {}
@@ -19,8 +19,15 @@ impl State {
 		options_checkbox(par.mp, c, SettingType::BlockGameInput)?;
 		options_checkbox(par.mp, c, SettingType::BlockGameInputIgnoreWatch)?;
 		options_checkbox(par.mp, c, SettingType::BlockPosesOnKbdInteraction)?;
-		options_slider_f32(par.mp, c, SettingType::WatchViewAngleMin, 0.0, 1.0, 0.01)?;
-		options_slider_f32(par.mp, c, SettingType::WatchViewAngleMax, 0.0, 1.0, 0.01)?;
+		options_range_f32(
+			par.mp,
+			c,
+			SettingType::WatchViewAngleMin,
+			SettingType::WatchViewAngleMax,
+			0.1,
+			1.0,
+			0.1,
+		)?;
 		Ok(State {})
 	}
 }

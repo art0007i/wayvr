@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, f32, rc::Rc};
 
 use glam::{Mat4, Vec2, Vec3};
 use taffy::prelude::{length, percent};
@@ -51,7 +51,7 @@ impl Value {
 		// get the step index from min
 		let mut k = ((clamped - limits.min_value) / limits.step).round();
 
-		let k_max = (span / limits.step).floor();
+		let k_max = (span / limits.step).round();
 		if k < 0.0 {
 			k = 0.0;
 		}
@@ -278,6 +278,7 @@ impl State {
 
 	fn set_value(&mut self, common: &mut CallbackDataCommon, data: &Data, index: ValueIndex, new_value: f32) {
 		let val1 = self.value1.get();
+		let val2 = self.value2.as_ref().map(|v| v.get()).unwrap_or(f32::MAX);
 
 		let Some(value) = (match index {
 			ValueIndex::Primary => Some(&mut self.value1),
@@ -297,9 +298,9 @@ impl State {
 		let before = value.get();
 
 		if index == ValueIndex::Secondary {
-			value.set(&self.limits, new_value.max(val1));
+			value.set(&self.limits, new_value.max(val1 + self.limits.step));
 		} else {
-			value.set(&self.limits, new_value);
+			value.set(&self.limits, new_value.min(val2 - self.limits.step));
 		}
 
 		let has_changed = value.get() != before;
