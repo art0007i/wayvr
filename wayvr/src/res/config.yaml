@@ -85,6 +85,9 @@
 # The settings are here for reference only.
 # Probably don't include them in your config file.
 
+## The watch will be enabled
+#enable_watch: true
+
 ## The bottom of the watch will list sets instead of overlays.
 #sets_on_watch: false
 

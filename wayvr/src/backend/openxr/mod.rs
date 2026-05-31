@@ -141,7 +141,7 @@ pub fn openxr_run(
         lines.allocate(&xr_state, &app)?,
     ];
 
-    let watch_id = overlays.lookup(WATCH_NAME).unwrap(); // want panic
+    let watch_id = overlays.lookup(WATCH_NAME);
 
     let mut input_source = input::OpenXrInputSource::new(&xr_state)?;
 
@@ -345,17 +345,19 @@ pub fn openxr_run(
 
         app.hid_provider.inner.commit();
 
-        let watch = overlays.mut_by_id(watch_id).unwrap(); // want panic
-        let watch_state = watch.config.active_state.as_mut().unwrap();
-        let watch_transform = watch_state.transform;
-        if watch_state.alpha < 0.05 {
-            //FIXME: Temporary workaround for Monado bug
-            watch_state.transform = Affine3A::from_scale(Vec3 {
-                x: 0.001,
-                y: 0.001,
-                z: 0.001,
-            });
-            watch_state.alpha = 0.02; // visible but not really. Monado freaks out if no layers are submitted.
+        let mut watch_transform = Affine3A::IDENTITY;
+        if let Some(watch) = watch_id.and_then(|id| overlays.mut_by_id(id)) {
+            let watch_state = watch.config.active_state.as_mut().unwrap();
+            watch_transform = watch_state.transform;
+            if watch_state.alpha < 0.05 {
+                //FIXME: Temporary workaround for Monado bug
+                watch_state.transform = Affine3A::from_scale(Vec3 {
+                    x: 0.001,
+                    y: 0.001,
+                    z: 0.001,
+                });
+                watch_state.alpha = 0.02; // visible but not really. Monado freaks out if no layers are submitted.
+            }
         }
 
         if let Err(e) =
@@ -509,8 +511,9 @@ pub fn openxr_run(
         delete_queue.retain(|(_, frame)| *frame > cur_frame);
 
         //FIXME: Temporary workaround for Monado bug
-        let watch = overlays.mut_by_id(watch_id).unwrap(); // want panic
-        watch.config.active_state.as_mut().unwrap().transform = watch_transform;
+        if let Some(watch) = watch_id.and_then(|id| overlays.mut_by_id(id)) {
+            watch.config.active_state.as_mut().unwrap().transform = watch_transform;
+        }
     } // main_loop
 
     if let (Some(blocker), Some(monado)) = (blocker, app.monado_state.as_mut()) {

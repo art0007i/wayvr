@@ -273,6 +273,9 @@ pub struct GeneralConfig {
 	#[serde(default = "def_false")]
 	pub double_cursor_fix: bool,
 
+	#[serde(default = "def_true")]
+	pub enable_watch: bool,
+
 	#[serde(default = "def_false")]
 	pub sets_on_watch: bool,
 
