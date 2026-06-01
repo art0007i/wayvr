@@ -5,17 +5,17 @@ use std::{
 };
 
 use anyhow::Context;
-use glam::{Affine3A, Quat, Vec3, Vec3A};
+use glam::{Affine3A, Vec3, Vec3A};
 use slotmap::{Key, SecondaryMap, SlotMap};
 use wgui::log::LogErr;
 use wlx_common::{
     astr_containers::{AStrMap, AStrMapExt},
     config::SerializedWindowSet,
-    overlays::{BackendAttrib, BackendAttribValue, ToastTopic}, windowing::{OverlayWindowState, Positioning},
+    overlays::{BackendAttrib, BackendAttribValue, ToastTopic},
 };
 
 use crate::{
-    FRAME_COUNTER, backend::task::{OverlayTask, ToggleMode}, config::save_state, gui::panel::{GuiPanel, NewGuiPanelParams}, overlays::{
+    FRAME_COUNTER, backend::task::{OverlayTask, ToggleMode}, config::save_state, overlays::{
         anchor::{create_anchor, create_grab_help},
         custom::create_custom,
         dashboard::{DASH_NAME, create_dash_frontend},
@@ -29,11 +29,10 @@ use crate::{
         backend::{OverlayEventData, OverlayMeta},
         set::OverlayWindowSet,
         snap_upright,
-        window::{OverlayCategory, OverlayWindowConfig, OverlayWindowData},
+        window::{OverlayCategory, OverlayWindowData},
     }
 };
 
-pub const DUMMY_NAME: &str = "FIXME: Temporary workaround for Monado bug";
 pub const MAX_OVERLAY_SETS: usize = 6;
 
 pub struct OverlayWindowManager<T> {
@@ -123,29 +122,6 @@ where
         let anchor = OverlayWindowData::from_config(create_anchor(app)?);
         me.add(anchor, app);
         
-        // FIXME: Temporary workaround for Monado bug
-        // Monado freaks out if no layers are submitted.
-        // This creates a panel which is behind your head and is very tiny so you should never be able to see it.
-        let mut panel =
-            GuiPanel::new_from_template(app, "gui/dummy.xml", (), NewGuiPanelParams::default()).unwrap();
-        panel.update_layout(app)?;
-        let dummy = OverlayWindowData::from_config(OverlayWindowConfig {
-            name: DUMMY_NAME.into(),
-            z_order: u32::MIN,
-            category: OverlayCategory::Internal,
-            default_state: OverlayWindowState {
-                grabbable: false,
-                interactable: false,
-                positioning: Positioning::FollowHead { lerp: 1.0 },
-                transform: Affine3A::from_scale_rotation_translation(Vec3::ONE * 0.001, Quat::IDENTITY, Vec3::Z),
-                ..OverlayWindowState::default()
-            },
-            show_on_spawn: true,
-            global: true,
-            ..OverlayWindowConfig::from_backend(Box::new(panel))
-        });
-        me.add(dummy, app);
-
         let watch = OverlayWindowData::from_config(create_watch(app)?);
         me.watch_id = me.add(watch, app);
 

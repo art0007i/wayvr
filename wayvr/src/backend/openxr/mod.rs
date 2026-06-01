@@ -5,6 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use glam::{Affine3A, Vec3};
 use input::OpenXrInputSource;
 use openxr as xr;
 use skybox::{Skybox, create_skybox};
@@ -21,7 +22,7 @@ use crate::{
     },
     config::{save_settings, save_state},
     graphics::{GpuFutures, init_openxr_graphics},
-    overlays::toast::Toast,
+    overlays::{toast::Toast, watch::WATCH_NAME},
     state::AppState,
     subsystem::notifications::NotificationManager,
     windowing::{
@@ -139,6 +140,8 @@ pub fn openxr_run(
         lines.allocate(&xr_state, &app)?,
         lines.allocate(&xr_state, &app)?,
     ];
+
+    let watch_id = overlays.lookup(WATCH_NAME).unwrap(); // want panic
 
     let mut input_source = input::OpenXrInputSource::new(&xr_state)?;
 
@@ -342,6 +345,22 @@ pub fn openxr_run(
 
         app.hid_provider.inner.commit();
 
+        let watch = overlays.mut_by_id(watch_id).unwrap(); // want panic
+        if watch.config.active_state.is_none() {
+            watch.config.activate(&mut app);
+        }
+        let watch_state = watch.config.active_state.as_mut().unwrap();
+        let watch_transform = watch_state.transform;
+        if watch_state.alpha < 0.05 || !app.session.config.enable_watch {
+            //FIXME: Temporary workaround for Monado bug
+            watch_state.transform = Affine3A::from_scale(Vec3 {
+                x: 0.001,
+                y: 0.001,
+                z: 0.001,
+            });
+            watch_state.alpha = 0.02; // visible but not really. Monado freaks out if no layers are submitted.
+        }
+
         if let Err(e) =
             crate::ipc::events::tick_events::<OpenXrOverlayData>(&mut app, &mut overlays)
         {
@@ -491,6 +510,16 @@ pub fn openxr_run(
         }
 
         delete_queue.retain(|(_, frame)| *frame > cur_frame);
+
+        //FIXME: Temporary workaround for Monado bug
+        let watch = overlays.mut_by_id(watch_id).unwrap(); // want panic
+        
+        if let Some(state) = watch.config.active_state.as_mut() {
+            state.transform = watch_transform
+        }
+        if !app.session.config.enable_watch {
+            watch.config.deactivate();
+        }
     } // main_loop
 
     if let (Some(blocker), Some(monado)) = (blocker, app.monado_state.as_mut()) {
