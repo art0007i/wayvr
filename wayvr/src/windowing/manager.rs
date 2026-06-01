@@ -121,7 +121,7 @@ where
 
         let anchor = OverlayWindowData::from_config(create_anchor(app)?);
         me.add(anchor, app);
-        
+
         let watch = OverlayWindowData::from_config(create_watch(app)?);
         me.watch_id = me.add(watch, app);
 
