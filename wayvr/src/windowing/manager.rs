@@ -47,7 +47,7 @@ pub struct OverlayWindowManager<T> {
     /// Usually the same as current_set, except it keeps its value when current_set is hidden.
     restore_set: usize,
     anchor_local: Affine3A,
-    watch_id: Option<OverlayID>,
+    watch_id: OverlayID,
     keyboard_id: OverlayID,
     edit_mode: bool,
     dropped_overlays: VecDeque<OverlayWindowData<T>>,
@@ -67,7 +67,7 @@ where
             sets: vec![OverlayWindowSet::default()],
             global_set: OverlayWindowSet::default(),
             anchor_local: Affine3A::from_translation(Vec3::NEG_Z),
-            watch_id: None,    // set down below
+            watch_id: OverlayID::null(),    // set down below
             keyboard_id: OverlayID::null(), // set down below
             edit_mode: false,
             dropped_overlays: VecDeque::with_capacity(8),
@@ -146,10 +146,8 @@ where
         });
         me.add(dummy, app);
 
-        if app.session.config.enable_watch {
-            let watch = OverlayWindowData::from_config(create_watch(app)?);
-            me.watch_id = Some(me.add(watch, app));
-        }
+        let watch = OverlayWindowData::from_config(create_watch(app)?);
+        me.watch_id = me.add(watch, app);
 
         let dash_frontend = OverlayWindowData::from_config(create_dash_frontend(app)?);
         me.add(dash_frontend, app);
@@ -170,7 +168,7 @@ where
         me.restore_layout(app);
         me.overlays_changed(app)?;
 
-        for id in [me.watch_id, Some(me.keyboard_id)].iter().filter_map(|x| *x) {
+        for id in [me.watch_id, me.keyboard_id] {
             for ev in [
                 OverlayEventData::NumSetsChanged(me.sets.len()),
                 OverlayEventData::EditModeChanged(false),
@@ -309,12 +307,13 @@ where
                 self.sets_changed(app);
             }
             OverlayTask::SettingsChanged => {
-                if app.session.config.enable_watch != self.watch_id.is_some() {
-                    if let Some(watch_id) = self.watch_id.take() {
-                        self.overlays.remove(watch_id);
-                    } else {
-                        let watch = OverlayWindowData::from_config(create_watch(app)?);
-                        self.watch_id = Some(self.add(watch, app));
+                if let Some(watch) = self.mut_by_id(self.watch_id) {
+                    if app.session.config.enable_watch != watch.config.active_state.is_some() {
+                        if watch.config.active_state.is_some() {
+                            watch.config.deactivate();
+                        } else {
+                            watch.config.activate(app);
+                        }
                     }
                 }
 
@@ -470,8 +469,7 @@ impl<T> OverlayWindowManager<T> {
         }
 
         // global overlays; watch, toast
-        if let Some(watch_id) = self.watch_id {
-            for oid in &[watch_id] {
+        for oid in &[self.watch_id] {
             let Some(o) = self.get_by_id(*oid) else {
                 break;
             };
@@ -482,7 +480,6 @@ impl<T> OverlayWindowManager<T> {
                 .config
                 .global_set
                 .insert(o.config.name.clone(), state.clone());
-            }
         }
 
         // BackendAttrib
@@ -619,18 +616,16 @@ impl<T> OverlayWindowManager<T> {
                 }
             }
         }
-        if let Some(watch_id) = self.watch_id {
-            if changed && let Some(watch) = self.mut_by_id(watch_id) {
-                watch
-                    .config
-                    .active_state
-                    .iter_mut()
-                    .for_each(|f| f.grabbable = enabled);
-                watch
-                    .config
-                    .backend
-                    .notify(app, OverlayEventData::EditModeChanged(enabled))?;
-            }
+        if changed && let Some(watch) = self.mut_by_id(self.watch_id) {
+            watch
+                .config
+                .active_state
+                .iter_mut()
+                .for_each(|f| f.grabbable = enabled);
+            watch
+                .config
+                .backend
+                .notify(app, OverlayEventData::EditModeChanged(enabled))?;
         }
         Ok(())
     }
@@ -858,7 +853,7 @@ impl<T> OverlayWindowManager<T> {
         }
         self.current_set = new_set;
 
-        for id in [self.watch_id, Some(self.keyboard_id)].iter().filter_map(|x| *x) {
+        for id in [self.watch_id, self.keyboard_id] {
             let _ = self.mut_by_id(id).context("Missing overlay").and_then(|o| {
                 o.config
                     .backend
@@ -911,7 +906,7 @@ impl<T> OverlayWindowManager<T> {
         }
 
         let meta: Rc<[OverlayMeta]> = meta.into();
-        for id in [self.watch_id, Some(self.keyboard_id)].iter().filter_map(|x| *x) {
+        for id in [self.watch_id, self.keyboard_id] {
             let _ = self.mut_by_id(id).context("Missing overlay").and_then(|o| {
                 o.config
                     .backend
@@ -936,7 +931,7 @@ impl<T> OverlayWindowManager<T> {
         }
 
         let vis: Rc<[OverlayID]> = vis.into();
-        for id in [self.watch_id, Some(self.keyboard_id)].iter().filter_map(|x| *x) {
+        for id in [self.watch_id, self.keyboard_id] {
             let _ = self.mut_by_id(id).context("Missing overlay").and_then(|o| {
                 o.config
                     .backend
@@ -949,7 +944,7 @@ impl<T> OverlayWindowManager<T> {
 
     fn sets_changed(&mut self, app: &mut AppState) {
         let len = self.sets.len();
-        for id in [self.watch_id, Some(self.keyboard_id)].iter().filter_map(|x| *x) {
+        for id in [self.watch_id, self.keyboard_id] {
             if let Some(o) = self.mut_by_id(id) {
                 let _ = o
                     .config
@@ -962,13 +957,11 @@ impl<T> OverlayWindowManager<T> {
 
     #[allow(clippy::unnecessary_wraps)]
     pub fn devices_changed(&mut self, app: &mut AppState) -> anyhow::Result<()> {
-        if let Some(watch_id) = self.watch_id {
-            if let Some(watch) = self.mut_by_id(watch_id) {
-                let _ = watch
-                    .config
-                    .backend
-                    .notify(app, OverlayEventData::DevicesChanged);
-            }
+        if let Some(watch) = self.mut_by_id(self.watch_id) {
+            let _ = watch
+                .config
+                .backend
+                .notify(app, OverlayEventData::DevicesChanged);
         }
 
         Ok(())

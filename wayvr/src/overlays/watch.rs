@@ -156,7 +156,7 @@ pub fn create_watch(app: &mut AppState) -> anyhow::Result<OverlayWindowConfig> {
             angle_fade: true,
             ..OverlayWindowState::default()
         },
-        show_on_spawn: true,
+        show_on_spawn: app.session.config.enable_watch,
         global: true,
         ..OverlayWindowConfig::from_backend(Box::new(panel))
     })
