@@ -513,7 +513,7 @@ pub fn openxr_run(
 
         //FIXME: Temporary workaround for Monado bug
         let watch = overlays.mut_by_id(watch_id).unwrap(); // want panic
-        
+
         if let Some(state) = watch.config.active_state.as_mut() {
             state.transform = watch_transform
         }

@@ -15,7 +15,10 @@ use wlx_common::{
 };
 
 use crate::{
-    FRAME_COUNTER, backend::task::{OverlayTask, ToggleMode}, config::save_state, overlays::{
+    FRAME_COUNTER,
+    backend::task::{OverlayTask, ToggleMode},
+    config::save_state,
+    overlays::{
         anchor::{create_anchor, create_grab_help},
         custom::create_custom,
         dashboard::{DASH_NAME, create_dash_frontend},
@@ -24,13 +27,15 @@ use crate::{
         screen::create_screens,
         toast::Toast,
         watch::{WATCH_NAME, create_watch},
-    }, state::AppState, windowing::{
+    },
+    state::AppState,
+    windowing::{
         OverlayID, OverlaySelector,
         backend::{OverlayEventData, OverlayMeta},
         set::OverlayWindowSet,
         snap_upright,
         window::{OverlayCategory, OverlayWindowData},
-    }
+    },
 };
 
 pub const MAX_OVERLAY_SETS: usize = 6;
